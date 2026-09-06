@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Universal Engineering Layer — How To</title>
+  <meta name="description" content="Interactive tutorial for the Universal Engineering Layer, its skill stack, and the Engineering Companion meta-skill." />
+  <style>
+    :root{
+      --bg:#0b0d10;
+      --panel:#11151a;
+      --panel-2:#151a21;
+      --text:#eef2f6;
+      --muted:#99a6b5;
+      --line:#24303c;
+      --accent:#7dd3fc;
+      --accent-2:#c4b5fd;
+      --good:#86efac;
+      --warn:#fde68a;
+      --danger:#fda4af;
+      --shadow:0 24px 80px rgba(0,0,0,.36);
+      --radius:22px;
+      --max:1180px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(125,211,252,.10), transparent 28%),
+        radial-gradient(circle at 90% 10%, rgba(196,181,253,.10), transparent 30%),
+        var(--bg);
+      color:var(--text);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      line-height:1.6;
+    }
+    a{color:inherit;text-decoration:none}
+    code,pre{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
+    .shell{
+      display:grid;
+      grid-template-columns:280px minmax(0,1fr);
+      min-height:100vh;
+    }
+    aside{
+      position:sticky;
+      top:0;
+      height:100vh;
+      border-right:1px solid var(--line);
+      background:rgba(10,13,17,.84);
+      backdrop-filter:blur(18px);
+      padding:28px 22px;
+      overflow:auto;
+    }
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-bottom:26px;
+    }
+    .logo{
+      width:42px;height:42px;border-radius:14px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:#061018;
+      display:grid;place-items:center;
+      font-weight:900;
+      box-shadow:0 12px 35px rgba(125,211,252,.2);
+    }
+    .brand strong{display:block;font-size:14px;letter-spacing:.02em}
+    .brand span{display:block;color:var(--muted);font-size:12px}
+    nav{display:grid;gap:6px}
+    nav a{
+      color:var(--muted);
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:14px;
+      transition:.18s ease;
+    }
+    nav a:hover,nav a.active{
+      color:var(--text);
+      background:var(--panel-2);
+    }
+    .aside-note{
+      margin-top:28px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      border-radius:16px;
+      padding:14px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    main{min-width:0}
+    .wrap{max-width:var(--max);margin:auto;padding:56px 42px 96px}
+    .hero{
+      position:relative;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+      border-radius:30px;
+      padding:54px;
+      box-shadow:var(--shadow);
+    }
+    .hero:after{
+      content:"";
+      position:absolute;inset:auto -10% -55% 45%;
+      height:430px;
+      background:radial-gradient(circle,rgba(125,211,252,.18),transparent 62%);
+      pointer-events:none;
+    }
+    .eyebrow{
+      display:inline-flex;
+      gap:8px;align-items:center;
+      color:var(--accent);
+      font-size:12px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.15em;
+      margin-bottom:14px;
+    }
+    h1{
+      margin:0;
+      max-width:840px;
+      font-size:clamp(42px,7vw,82px);
+      line-height:.98;
+      letter-spacing:-.055em;
+    }
+    .lede{
+      max-width:760px;
+      margin:24px 0 0;
+      color:#c6d0da;
+      font-size:19px;
+    }
+    .hero-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px;
+      margin-top:34px;
+    }
+    .metric{
+      border:1px solid var(--line);
+      background:rgba(7,11,15,.48);
+      border-radius:16px;
+      padding:18px;
+    }
+    .metric b{display:block;font-size:22px}
+    .metric span{color:var(--muted);font-size:13px}
+    section{padding-top:72px;scroll-margin-top:26px}
+    .section-head{
+      display:flex;justify-content:space-between;align-items:end;gap:20px;
+      margin-bottom:24px;
+    }
+    h2{margin:0;font-size:34px;letter-spacing:-.035em}
+    h3{margin:0 0 8px;font-size:18px}
+    p{color:#c7d0da}
+    .muted{color:var(--muted)}
+    .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .card{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,var(--panel),#0f1318);
+      border-radius:var(--radius);
+      padding:24px;
+    }
+    .card p:last-child{margin-bottom:0}
+    .tag{
+      display:inline-block;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:4px 9px;
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:12px;
+    }
+    .flow{
+      display:grid;
+      gap:10px;
+      margin-top:18px;
+    }
+    .flow-row{
+      display:grid;
+      grid-template-columns:150px 1fr;
+      gap:16px;align-items:start;
+      border:1px solid var(--line);
+      background:var(--panel);
+      border-radius:16px;
+      padding:16px;
+    }
+    .flow-row strong{color:var(--accent)}
+    pre{
+      margin:16px 0 0;
+      background:#080b0e;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:18px;
+      overflow:auto;
+      color:#d9e5ef;
+    }
+    .timeline{
+      position:relative;
+      padding-left:26px;
+      display:grid;gap:16px;
+    }
+    .timeline:before{
+      content:"";
+      position:absolute;left:8px;top:10px;bottom:10px;width:2px;background:var(--line);
+    }
+    .moment{
+      position:relative;
+      border:1px solid var(--line);
+      background:var(--panel);
+      border-radius:16px;padding:18px;
+    }
+    .moment:before{
+      content:"";
+      position:absolute;left:-23px;top:23px;width:10px;height:10px;border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 0 5px var(--bg);
+    }
+    .moment b{font-size:15px}
+    .moment span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+    .decision{
+      border:1px solid var(--line);
+      border-radius:22px;
+      overflow:hidden;
+    }
+    .decision .row{
+      display:grid;
+      grid-template-columns:180px 1fr;
+      gap:20px;
+      padding:18px 20px;
+      background:var(--panel);
+      border-bottom:1px solid var(--line);
+    }
+    .decision .row:last-child{border-bottom:0}
+    .decision .label{color:var(--muted);font-size:13px}
+    .decision .value{font-weight:700}
+    .callout{
+      border:1px solid rgba(134,239,172,.28);
+      background:rgba(134,239,172,.055);
+      border-radius:18px;
+      padding:18px 20px;
+    }
+    .callout strong{color:var(--good)}
+    .steps{
+      counter-reset:step;
+      display:grid;
+      gap:14px;
+    }
+    .step{
+      counter-increment:step;
+      display:grid;
+      grid-template-columns:48px 1fr;
+      gap:16px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      background:var(--panel);
+    }
+    .step:before{
+      content:counter(step);
+      width:36px;height:36px;border-radius:12px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:#071019;font-weight:900;
+    }
+    .profile{
+      border:1px solid var(--line);
+      border-radius:20px;padding:22px;background:var(--panel);
+    }
+    .profile.recommended{outline:1px solid rgba(125,211,252,.35)}
+    .profile ul{padding-left:18px;color:#c7d0da}
+    footer{
+      margin-top:86px;
+      padding-top:26px;
+      border-top:1px solid var(--line);
+      display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
+      color:var(--muted);font-size:13px;
+    }
+    .creator{color:var(--text);font-weight:800}
+    .kbd{
+      display:inline-block;
+      border:1px solid var(--line);
+      background:#0a0d11;
+      border-bottom-width:2px;
+      border-radius:7px;
+      padding:1px 6px;
+      font-family:monospace;font-size:12px;
+    }
+    @media (max-width:920px){
+      .shell{grid-template-columns:1fr}
+      aside{display:none}
+      .wrap{padding:28px 18px 72px}
+      .hero{padding:30px}
+      .hero-grid,.grid-2,.grid-3{grid-template-columns:1fr}
+      .flow-row,.decision .row{grid-template-columns:1fr}
+      h1{font-size:48px}
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">
+        <div class="logo">UEL</div>
+        <div>
+          <strong>Universal Engineering Layer</strong>
+          <span>Engineering Companion Tutorial</span>
+        </div>
+      </div>
+      <nav id="nav">
+        <a href="#overview">Overview</a>
+        <a href="#stack">The skill stack</a>
+        <a href="#companion">Engineering Companion</a>
+        <a href="#moments">Project moments</a>
+        <a href="#routing">How routing works</a>
+        <a href="#profiles">Profiles</a>
+        <a href="#workflow">Typical workflow</a>
+        <a href="#commands">Commands</a>
+        <a href="#mental-model">Mental model</a>
+        <a href="#attribution">Attribution</a>
+      </nav>
+      <div class="aside-note">
+        Local tutorial file.<br>
+        It is added to <code>.gitignore</code> automatically so each developer can keep it without committing generated docs.
+      </div>
+    </aside>
+
+    <main>
+      <div class="wrap">
+        <section id="overview" style="padding-top:0">
+          <div class="hero">
+            <div class="eyebrow">Universal Engineering Layer · How To</div>
+            <h1>Your AI engineering system, explained.</h1>
+            <p class="lede">
+              The Universal Engineering Layer gives coding agents a shared engineering discipline,
+              a set of task workflows, a modern tool hierarchy, and an Engineering Companion that
+              recommends what to do next based on the current moment of the project.
+            </p>
+            <div class="hero-grid">
+              <div class="metric"><b>1</b><span>canonical engineering layer</span></div>
+              <div class="metric"><b>Many</b><span>supported harnesses & IDEs</span></div>
+              <div class="metric"><b>Dynamic</b><span>workflow routing by project moment</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="stack">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Architecture</div>
+              <h2>The skill stack</h2>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <article class="card">
+              <span class="tag">Always active</span>
+              <h3>Karpathy Guidelines</h3>
+              <p>Defines engineering behavior: understand first, keep changes surgical, surface assumptions, and verify the result.</p>
+            </article>
+            <article class="card">
+              <span class="tag">Dynamic routing</span>
+              <h3>Engineering Companion</h3>
+              <p>Identifies the current project moment, estimates risk, and routes the task toward the best workflow and tools.</p>
+            </article>
+            <article class="card">
+              <span class="tag">On demand</span>
+              <h3>Matt Pocock Skills</h3>
+              <p>Provides task-specific workflows such as specification, implementation, TDD, review, prototyping, and triage.</p>
+            </article>
+          </div>
+
+          <div class="flow">
+            <div class="flow-row"><strong>Behavior</strong><div>Karpathy → how the agent should behave while engineering.</div></div>
+            <div class="flow-row"><strong>Routing</strong><div>Engineering Companion → what kind of work is happening now and what should happen next.</div></div>
+            <div class="flow-row"><strong>Workflow</strong><div>Matt Pocock skills → the specific process for the task.</div></div>
+            <div class="flow-row"><strong>Capabilities</strong><div>codebase-memory, Context7, ast-grep, Playwright, GitHub MCP, and other tools → what the agent can actually inspect or verify.</div></div>
+          </div>
+        </section>
+
+        <section id="companion">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Meta skill</div>
+              <h2>Engineering Companion</h2>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>What it looks at</h3>
+              <p>When useful, the companion can inspect the user's request, Git state, branch name, changed files, tests, CI presence, project manifests, ADRs, context docs, and semantic code information.</p>
+              <pre>engineering-layer companion</pre>
+            </div>
+            <div class="card">
+              <h3>What it returns</h3>
+              <div class="decision">
+                <div class="row"><div class="label">Current moment</div><div class="value">implementation</div></div>
+                <div class="row"><div class="label">Risk</div><div class="value">medium</div></div>
+                <div class="row"><div class="label">Recommended skill</div><div class="value">implementation / TDD</div></div>
+                <div class="row"><div class="label">Recommended tools</div><div class="value">codebase-memory + Context7</div></div>
+                <div class="row"><div class="label">Verification</div><div class="value">tests → typecheck → lint → build</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top:18px">
+            <strong>Important:</strong>
+            The companion routes the work. It does not override the engineer, project rules, or explicit human instructions.
+          </div>
+        </section>
+
+        <section id="moments">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Project awareness</div>
+              <h2>Project moments</h2>
+            </div>
+            <p class="muted">The companion re-evaluates the moment as the work evolves.</p>
+          </div>
+
+          <div class="timeline">
+            <div class="moment"><b>Idea</b><span>The concept exists, but scope and constraints are still fuzzy.</span></div>
+            <div class="moment"><b>Discovery</b><span>The repository, subsystem, or dependency needs to be understood.</span></div>
+            <div class="moment"><b>Specification</b><span>Expected behavior needs to be made explicit before coding.</span></div>
+            <div class="moment"><b>Planning</b><span>Known work should be decomposed into implementation units.</span></div>
+            <div class="moment"><b>Implementation</b><span>A defined change is actively being built.</span></div>
+            <div class="moment"><b>Debugging</b><span>Observed behavior differs from expected behavior and the cause is unknown.</span></div>
+            <div class="moment"><b>Refactoring</b><span>Structure changes while behavior should remain stable.</span></div>
+            <div class="moment"><b>Testing / Review</b><span>The main goal becomes confidence rather than new code.</span></div>
+            <div class="moment"><b>Integration / PR</b><span>Components, CI, review, or remote collaboration become the focus.</span></div>
+            <div class="moment"><b>Release / Production Incident</b><span>Deployment, rollback, observability, and blast radius matter most.</span></div>
+          </div>
+        </section>
+
+        <section id="routing">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Tool hierarchy</div>
+              <h2>How routing works</h2>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>Understand your own code</h3>
+              <pre>1. codebase-memory / LSP
+2. ast-grep
+3. ripgrep
+4. manual traversal</pre>
+              <p class="muted">Use the most semantic tool that can answer the question cleanly.</p>
+            </div>
+            <div class="card">
+              <h3>Understand external libraries</h3>
+              <pre>1. Context7
+2. official docs
+3. web search</pre>
+              <p class="muted">Context7 is for third-party APIs, not for understanding your own repository.</p>
+            </div>
+            <div class="card">
+              <h3>Verify a change</h3>
+              <pre>1. focused tests
+2. broader tests
+3. typecheck
+4. lint
+5. build
+6. Playwright</pre>
+            </div>
+            <div class="card">
+              <h3>Collaborate</h3>
+              <pre>Local Git → diffs / branches / commits
+GitHub MCP → issues / PRs / CI</pre>
+              <p class="muted">Prefer read-only remote access by default.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="profiles">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Installation modes</div>
+              <h2>Profiles</h2>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="profile">
+              <span class="tag">Lightweight</span>
+              <h3>Minimal</h3>
+              <ul>
+                <li>Karpathy guidelines</li>
+                <li>Engineering Companion</li>
+                <li>Matt Pocock skills</li>
+                <li>Harness adapters</li>
+                <li>ENGINEERS.md</li>
+              </ul>
+              <pre>engineering-layer install --profile minimal</pre>
+            </div>
+            <div class="profile recommended">
+              <span class="tag">Recommended</span>
+              <h3>Recommended</h3>
+              <ul>
+                <li>Everything in Minimal</li>
+                <li>codebase-memory-mcp</li>
+                <li>ast-grep</li>
+                <li>ripgrep / fd</li>
+                <li>jq / yq</li>
+                <li>Context7 guidance</li>
+              </ul>
+              <pre>engineering-layer install --profile recommended</pre>
+            </div>
+            <div class="profile">
+              <span class="tag">Agentic</span>
+              <h3>Full</h3>
+              <ul>
+                <li>Everything in Recommended</li>
+                <li>Playwright guidance</li>
+                <li>GitHub MCP guidance</li>
+                <li>Broader autonomous verification</li>
+              </ul>
+              <pre>engineering-layer install --profile full</pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="workflow">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Example</div>
+              <h2>A typical workflow</h2>
+            </div>
+          </div>
+
+          <div class="steps">
+            <div class="step"><div><h3>User asks for a change</h3><p>The harness reads project rules and the shared engineering layer.</p></div></div>
+            <div class="step"><div><h3>Companion detects the moment</h3><p>It decides whether this is discovery, implementation, debugging, refactoring, review, release, or another moment.</p></div></div>
+            <div class="step"><div><h3>Karpathy baseline applies</h3><p>The work stays minimal, explicit, and verifiable.</p></div></div>
+            <div class="step"><div><h3>The right workflow skill is selected</h3><p>Specification, TDD, implementation, code review, triage, or another relevant skill is loaded.</p></div></div>
+            <div class="step"><div><h3>The right capabilities are used</h3><p>Semantic code tools, external docs, structural search, browser verification, or GitHub context are used only when they add value.</p></div></div>
+            <div class="step"><div><h3>Verification becomes the final moment</h3><p>Tests, typecheck, lint, build, runtime behavior, and diff review close the loop.</p></div></div>
+          </div>
+        </section>
+
+        <section id="commands">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">CLI</div>
+              <h2>Useful commands</h2>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card"><h3>Install</h3><pre>engineering-layer install --profile recommended</pre></div>
+            <div class="card"><h3>Ask the companion</h3><pre>engineering-layer companion</pre></div>
+            <div class="card"><h3>Validate</h3><pre>engineering-layer doctor</pre></div>
+            <div class="card"><h3>Refresh</h3><pre>engineering-layer update --profile recommended</pre></div>
+          </div>
+        </section>
+
+        <section id="mental-model">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Remember this</div>
+              <h2>The mental model</h2>
+            </div>
+          </div>
+
+          <div class="card">
+            <pre>MODEL != ENGINEERING PROCESS
+HARNESS != ENGINEERING PROCESS
+
+PROJECT
+  │
+  ▼
+ENGINEERING POLICY
+  │
+  ▼
+ENGINEERING COMPANION
+  │
+  ▼
+TASK WORKFLOW
+  │
+  ▼
+ENGINEERING CAPABILITIES
+  │
+  ├── Codex
+  ├── Claude
+  ├── Hermes
+  ├── Antigravity
+  ├── Copilot
+  ├── OpenCode
+  └── future agents</pre>
+            <p>
+              The goal is not to force one AI tool on a project. The goal is to make the project carry its own engineering discipline,
+              so different agents can work under the same rules.
+            </p>
+          </div>
+        </section>
+
+        <section id="attribution">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Open source</div>
+              <h2>Upstream projects & attribution</h2>
+            </div>
+          </div>
+          <div class="card">
+            <p>
+              Universal Engineering Layer is an independent integration project created by
+              <strong>@sudo-make-jon</strong>. It installs or integrates with independent
+              open-source projects and does not claim authorship of them.
+            </p>
+            <div class="decision">
+              <div class="row"><div class="label">Matt Pocock Skills</div><div class="value">Task workflows · MIT</div></div>
+              <div class="row"><div class="label">Karpathy Guidelines</div><div class="value">Engineering baseline · MIT declared by upstream skill</div></div>
+              <div class="row"><div class="label">codebase-memory-mcp</div><div class="value">Code intelligence · MIT</div></div>
+              <div class="row"><div class="label">Context7 by Upstash</div><div class="value">External documentation · MIT</div></div>
+              <div class="row"><div class="label">Playwright MCP by Microsoft</div><div class="value">Browser verification · Apache-2.0</div></div>
+              <div class="row"><div class="label">GitHub MCP Server</div><div class="value">GitHub integration · MIT</div></div>
+            </div>
+            <p class="muted" style="margin-top:16px">
+              Each upstream project remains governed by its own license. The Universal
+              Engineering Layer MIT license applies only to its original installer,
+              Engineering Companion, routing logic, documentation, tutorial, and integration
+              code. See THIRD_PARTY.md in the Universal Engineering Layer repository for
+              detailed attribution.
+            </p>
+          </div>
+        </section>
+
+        <footer>
+          <div>Universal Engineering Layer · Local tutorial</div>
+          <div class="creator">Made by @sudo-make-jon</div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const links = [...document.querySelectorAll('#nav a')];
+    const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting){
+          links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+        }
+      });
+    }, {rootMargin:'-30% 0px -60% 0px', threshold:0});
+    sections.forEach(s => observer.observe(s));
+  </script>
+</body>
+</html>
