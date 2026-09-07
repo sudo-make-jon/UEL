@@ -126,6 +126,24 @@ work under the same engineering process.
 
 ---
 
+
+## See UEL in action
+
+[![Watch the Universal Engineering Layer visual tutorial](docs/media/uel-visual-tutorial-preview.gif)](docs/media/uel-visual-tutorial.mp4)
+
+_Click the animated preview to open the full 16:9 visual tutorial._
+
+The walkthrough shows how UEL:
+
+- installs the Karpathy engineering baseline and Matt Pocock workflow skills;
+- adds engineering capabilities and MCP/tooling guidance;
+- uses `/engineering-companion` to detect the current engineering moment;
+- routes to exact installed skills such as `/grill-me`, `/to-spec`, `/tdd`, and `/code-review`;
+- recommends short, ordered workflows based on the task and project state.
+
+
+---
+
 # Choose how you want to install it
 
 Universal Engineering Layer can be used in **two clearly different ways**:
@@ -256,8 +274,26 @@ cd /path/to/my-project
 Download the installer directly into that project:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/sudo-make-jon/UEL/main/universal-engineering-layer.sh
+curl -fL -o universal-engineering-layer.sh https://raw.githubusercontent.com/sudo-make-jon/UEL/main/universal-engineering-layer.sh
 ```
+
+
+Before running the installer, verify that you downloaded a shell script rather
+than an HTTP error page:
+
+```bash
+head -n 3 universal-engineering-layer.sh
+```
+
+The first line should be:
+
+```bash
+#!/usr/bin/env bash
+```
+
+Because the download command uses `curl -f`, HTTP errors such as `404 Not Found`
+will now cause `curl` to fail instead of writing the error response into
+`universal-engineering-layer.sh`.
 
 Make it executable:
 

@@ -39,7 +39,7 @@ set -Eeuo pipefail
 # outside managed marker blocks are preserved.
 # ============================================================================
 
-VERSION="3.5.0"
+VERSION="3.6.1"
 
 POCOCK_REPO="${POCOCK_REPO:-https://github.com/mattpocock/skills.git}"
 KARPATHY_REPO="${KARPATHY_REPO:-https://github.com/emavv/karpathy-guidelines.git}"
