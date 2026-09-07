@@ -155,7 +155,7 @@ is still installed into projects only when you explicitly run it there.
 Clone this repository:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/universal-engineering-layer.git
+git clone https://github.com/sudo-make-jon/UEL.git
 cd universal-engineering-layer
 ```
 
@@ -256,7 +256,7 @@ cd /path/to/my-project
 Download the installer directly into that project:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/YOUR_USERNAME/universal-engineering-layer/main/universal-engineering-layer.sh
+curl -LO https://raw.githubusercontent.com/sudo-make-jon/UEL/main/universal-engineering-layer.sh
 ```
 
 Make it executable:
