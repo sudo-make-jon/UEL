@@ -129,9 +129,9 @@ work under the same engineering process.
 
 ## See UEL in action
 
-[![Watch the Universal Engineering Layer visual tutorial](docs/media/uel-visual-tutorial-preview.gif)](docs/media/uel-visual-tutorial.mp4)
+![Universal Engineering Layer visual tutorial](docs/media/uel-visual-tutorial-full.gif)
 
-_Click the animated preview to open the full 16:9 visual tutorial._
+_This full-length animated GIF is the complete visual walkthrough._
 
 The walkthrough shows how UEL:
 
@@ -140,8 +140,6 @@ The walkthrough shows how UEL:
 - uses `/engineering-companion` to detect the current engineering moment;
 - routes to exact installed skills such as `/grill-me`, `/to-spec`, `/tdd`, and `/code-review`;
 - recommends short, ordered workflows based on the task and project state.
-
-
 ---
 
 # Choose how you want to install it
