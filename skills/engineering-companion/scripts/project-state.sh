@@ -15,12 +15,39 @@ moment="discovery"
 risk="low"
 reasons=()
 
+is_uel_infrastructure_path() {
+  local p="$1"
+  case "$p" in
+    how-to.html|ENGINEERS.md|AGENTS.md|CLAUDE.md|CONTEXT.md|.gitignore) return 0 ;;
+    .agents|.agents/*) return 0 ;;
+    .claude/skills|.claude/skills/*) return 0 ;;
+    .codex/skills|.codex/skills/*) return 0 ;;
+    .opencode/skills|.opencode/skills/*) return 0 ;;
+    .openclaw/skills|.openclaw/skills/*) return 0 ;;
+    .github/copilot-instructions.md) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+filtered_status() {
+  local line path
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    path="${line:3}"
+    # Git renames can appear as "old -> new"; use the destination.
+    [[ "$path" == *" -> "* ]] && path="${path##* -> }"
+    is_uel_infrastructure_path "$path" && continue
+    printf '%s\n' "$line"
+  done
+}
+
+
 if git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git_ok=1
   branch="$(git -C "$ROOT" branch --show-current 2>/dev/null || true)"
   [[ -n "$branch" ]] || branch="detached"
 
-  status="$(git -C "$ROOT" status --porcelain 2>/dev/null || true)"
+  status="$(git -C "$ROOT" status --porcelain --untracked-files=all 2>/dev/null | filtered_status || true)"
   if [[ -n "$status" ]]; then
     dirty=1
     changed="$(printf '%s\n' "$status" | grep -vc '^??' || true)"
@@ -89,7 +116,11 @@ if [[ "$git_ok" -eq 1 ]]; then
     {
       git -C "$ROOT" diff --name-only 2>/dev/null || true
       git -C "$ROOT" diff --cached --name-only 2>/dev/null || true
-    } | sort -u
+    } | while IFS= read -r p; do
+          [[ -n "$p" ]] || continue
+          is_uel_infrastructure_path "$p" && continue
+          printf '%s\n' "$p"
+        done | sort -u
   )"
 fi
 

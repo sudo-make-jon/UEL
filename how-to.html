@@ -310,8 +310,10 @@
         <a href="#overview">Overview</a>
         <a href="#stack">The skill stack</a>
         <a href="#companion">Engineering Companion</a>
+        <a href="#using-companion">Using the companion</a>
         <a href="#moments">Project moments</a>
         <a href="#routing">How routing works</a>
+        <a href="#exact-routing">Exact skill routing</a>
         <a href="#profiles">Profiles</a>
         <a href="#workflow">Typical workflow</a>
         <a href="#commands">Commands</a>
@@ -409,6 +411,81 @@
           </div>
         </section>
 
+        
+        <section id="using-companion">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Practical usage</div>
+              <h2>How to use the Engineering Companion</h2>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <span class="tag">Claude Code & skill-aware harnesses</span>
+              <h3>Invoke the meta-skill directly</h3>
+              <p>When your harness exposes installed skills as slash commands, run:</p>
+              <pre>/engineering-companion</pre>
+              <p>Or give it a focused request:</p>
+              <pre>/engineering-companion what should I do next?
+
+/engineering-companion assess the risk of this refactor
+
+/engineering-companion which skill should I use for this bug?</pre>
+              <p class="muted">
+                This is the richest mode because the skill can combine your active request
+                with project state and whatever tools the harness exposes.
+              </p>
+            </div>
+
+            <div class="card">
+              <span class="tag">Terminal</span>
+              <h3>Ask from the shell</h3>
+              <p>The portable repository-state detector is always available:</p>
+              <pre>engineering-layer companion</pre>
+              <p>or from a local copy:</p>
+              <pre>./universal-engineering-layer.sh companion</pre>
+              <p class="muted">
+                The shell mode uses Git and repository signals. It does not know as much
+                about your current conversational intent as the slash-command skill.
+              </p>
+              <p class="muted">
+                UEL-generated infrastructure is excluded from project-moment detection,
+                so installing the layer itself does not look like product implementation work.
+              </p>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top:18px">
+            <strong>Automatic routing:</strong>
+            compatible harnesses may also select the Engineering Companion automatically
+            when you are clearly asking what to do next, how risky a change is, or which
+            engineering workflow should be used.
+          </div>
+
+          <div class="card" style="margin-top:18px;border-color:rgba(253,230,138,.28);background:rgba(253,230,138,.045)">
+            <span class="tag">Important distinction</span>
+            <h3><code>how-to.html</code> is this tutorial — not your project's PRD</h3>
+            <p>
+              This file exists only to explain the Universal Engineering Layer. The
+              Engineering Companion is explicitly instructed <strong>not</strong> to use
+              it as a project seed, product specification, requirements document, design
+              brief, or source of product intent.
+            </p>
+            <p>
+              To understand what your project is meant to become, the agent should prefer
+              your current request, <code>CONTEXT.md</code>, actual project documentation,
+              ADRs, source code, tests, issues, and Git history.
+            </p>
+            <pre>how-to.html
+→ Universal Engineering Layer tutorial
+
+CONTEXT.md / actual project docs / user request
+→ project intent</pre>
+          </div>
+        </section>
+
+
         <section id="moments">
           <div class="section-head">
             <div>
@@ -473,6 +550,69 @@ GitHub MCP → issues / PRs / CI</pre>
             </div>
           </div>
         </section>
+
+        
+        <section id="exact-routing">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Installed skill intelligence</div>
+              <h2>Exact, deterministic skill routing</h2>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <span class="tag">Generated inventory</span>
+              <h3>The companion knows what is actually installed</h3>
+              <p>
+                Installation scans every <code>SKILL.md</code> and generates
+                <code>.agents/SKILL_REGISTRY.json</code>.
+              </p>
+              <pre>.agents/SKILL_REGISTRY.json</pre>
+            </div>
+            <div class="card">
+              <span class="tag">Hard rule</span>
+              <h3>No invented commands</h3>
+              <p>
+                The companion recommends exact installed skill commands.
+                If no matching skill is installed, it says so instead of inventing one.
+              </p>
+              <pre>GOOD
+/grill-me
+/to-spec
+/code-review
+
+BAD
+/some-made-up-skill</pre>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:18px">
+            <h3>Example: vague feature idea</h3>
+            <pre>User: "I have an idea, but the requirements are still vague."
+
+Engineering Companion:
+1. /grill-me
+2. /to-spec</pre>
+            <p class="muted">
+              These are the real installed Matt Pocock skill names, not generic workflow labels.
+            </p>
+          </div>
+
+          <div class="card" style="margin-top:18px">
+            <h3>Example lifecycle</h3>
+            <pre>/grill-me
+  ↓
+/to-spec
+  ↓
+/to-tickets
+  ↓
+/implement
+  ↓
+/code-review</pre>
+          </div>
+        </section>
+
 
         <section id="profiles">
           <div class="section-head">

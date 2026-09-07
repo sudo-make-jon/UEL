@@ -97,6 +97,51 @@ engineering-layer companion
 It returns the probable moment, risk, recommended skill, recommended tools,
 and verification strategy.
 
+
+### Invoking the Engineering Companion
+
+In harnesses that expose installed skills as slash commands, use:
+
+```text
+/engineering-companion
+```
+
+Examples:
+
+```text
+/engineering-companion what should I do next?
+/engineering-companion assess the risk of this refactor
+/engineering-companion which workflow fits this bug?
+```
+
+The shell equivalent is:
+
+```bash
+engineering-layer companion
+```
+
+The slash-command skill has access to the user's intent and harness context, so
+it can give richer routing than the shell detector alone.
+
+### Reserved Universal Engineering Layer files
+
+Do **not** treat Universal Engineering Layer documentation as product
+requirements.
+
+Most importantly:
+
+```text
+how-to.html
+```
+
+is a generated local tutorial explaining the engineering environment. It is
+**not** a PRD, project seed, product specification, design brief, or statement
+of what the target application should become.
+
+Project intent should come from the user's request, `CONTEXT.md`, actual
+project documentation, ADRs, source code, tests, issues, and repository
+history.
+
 ## Preferred tool hierarchy
 
 Agents should prefer the most semantic and least ambiguous tool that fits the
@@ -319,3 +364,28 @@ See the repository's `THIRD_PARTY.md` for detailed attribution.
 The Universal Engineering Layer MIT license covers its original integration,
 orchestration, Engineering Companion, documentation, and installer code. The
 installer does not modify the license of the target project.
+
+
+### Deterministic exact-skill routing
+
+Use `.agents/SKILL_REGISTRY.json` as the authoritative inventory of installed
+task skills.
+
+When a matching installed skill exists, recommend its exact command, for
+example:
+
+```text
+/grill-me
+/to-spec
+/tdd
+/code-review
+```
+
+Never invent a slash command that is absent from the registry.
+
+The bundled resolver is:
+
+```text
+.agents/skills/engineering-companion/scripts/resolve-skill.py
+```
+

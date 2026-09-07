@@ -39,7 +39,7 @@ set -Eeuo pipefail
 # outside managed marker blocks are preserved.
 # ============================================================================
 
-VERSION="3.1.0"
+VERSION="3.5.0"
 
 POCOCK_REPO="${POCOCK_REPO:-https://github.com/mattpocock/skills.git}"
 KARPATHY_REPO="${KARPATHY_REPO:-https://github.com/emavv/karpathy-guidelines.git}"
@@ -156,7 +156,10 @@ STATE_FILE="$STATE_DIR/state"
 TMP_DIR=""
 
 cleanup() {
-  [[ -n "${TMP_DIR:-}" && -d "$TMP_DIR" ]] && rm -rf "$TMP_DIR"
+  if [[ -n "${TMP_DIR:-}" && -d "$TMP_DIR" ]]; then
+    rm -rf "$TMP_DIR"
+  fi
+  return 0
 }
 trap cleanup EXIT
 
@@ -362,6 +365,46 @@ Your job is not to replace engineering skills. Your job is to determine:
 
 Always respect the instruction priority defined in `.agents/ENGINEERING.md`.
 
+
+## Universal Engineering Layer files are not project requirements
+
+Treat the following files as **engineering-layer infrastructure/documentation**,
+not as evidence of what the user's software product is supposed to become:
+
+- `how-to.html`
+- `ENGINEERS.md`
+- `.agents/ENGINEERING.md`
+- `.agents/SKILLS.md`
+- `.agents/mcp/*`
+- `.agents/rules/*`
+- `.agents/skills/engineering-companion/*`
+
+In particular:
+
+**`how-to.html` is a generated local tutorial for the Universal Engineering
+Layer. It is never a PRD, product specification, project seed, design brief,
+requirements document, or source of product intent unless the user explicitly
+says they intentionally repurposed it for that purpose.**
+
+Do not ask questions such as:
+
+> "If how-to.html is the seed of the project..."
+
+Do not infer the purpose of the user's project from `how-to.html`.
+
+To determine project intent, prefer, in order:
+
+1. the user's current request;
+2. `CONTEXT.md`;
+3. project README/documentation that is clearly about the product;
+4. ADRs;
+5. source code, manifests, tests, issues, and repository history;
+6. ask the user only if the purpose still cannot be determined.
+
+If the repository contains only Universal Engineering Layer files and no real
+project context yet, say that no project intent has been established rather
+than treating UEL documentation as the project specification.
+
 ## Inputs to inspect
 
 When useful, inspect:
@@ -386,6 +429,43 @@ A helper script is available at:
 
 Run it when repository state would materially improve routing.
 
+
+## How users can invoke this skill
+
+When the harness exposes skills as slash commands, the expected manual command is:
+
+```text
+/engineering-companion
+```
+
+Useful prompts include:
+
+```text
+/engineering-companion
+```
+
+```text
+/engineering-companion what should I do next?
+```
+
+```text
+/engineering-companion assess the risk of this change
+```
+
+```text
+/engineering-companion which skill should I use for this bug?
+```
+
+```text
+/engineering-companion review the current project moment before I continue
+```
+
+If the harness supports automatic skill selection, this skill may also be
+selected automatically when the user's request clearly involves workflow
+routing, risk assessment, choosing a skill, or deciding what should happen next.
+
+Manual invocation must still work even when automatic routing is available.
+
 ## Project moments
 
 Classify work into the closest useful moment:
@@ -408,9 +488,126 @@ Classify work into the closest useful moment:
 
 Read `references/project-moments.md` for definitions.
 
+
+## Deterministic installed-skill routing
+
+When choosing a task-specific skill, do **not** stop at a generic label such as
+"requirements clarification", "implementation", or "code review" if a matching
+installed skill exists.
+
+The authoritative installed-skill inventory is:
+
+`.agents/SKILL_REGISTRY.json`
+
+The registry is generated from the actual `SKILL.md` files installed in the
+project. It records each exact skill name, slash command, description,
+capabilities, supported project moments, and routing priority.
+
+A deterministic resolver is available at:
+
+`.agents/skills/engineering-companion/scripts/resolve-skill.py`
+
+Use it when selecting a concrete skill or sequence.
+
+Example:
+
+```bash
+python3 .agents/skills/engineering-companion/scripts/resolve-skill.py \
+  --registry .agents/SKILL_REGISTRY.json \
+  --moment specification \
+  --task "I have an idea but the requirements are still vague"
+```
+
+If `/grill-me` and `/to-spec` are installed and match the need, the output may
+be:
+
+```text
+Recommended installed skill sequence:
+1. /grill-me
+2. /to-spec
+```
+
+### Hard routing rules
+
+1. Inspect `.agents/SKILL_REGISTRY.json` before recommending a task-specific
+   skill.
+2. Recommend the **exact installed slash command** when a matching installed
+   skill exists.
+3. Prefer the exact installed skill over a generic workflow label.
+4. Never invent a skill name that is not present in the registry.
+5. If multiple steps are needed, recommend an **ordered installed-skill
+   sequence**.
+6. Keep the sequence as short as possible while covering the current need.
+7. Re-evaluate the project moment after a major workflow step completes.
+8. The Karpathy guidelines remain baseline behavior and are not treated as a
+   task-specific routing choice.
+9. The Engineering Companion must not route to itself as the next task skill.
+10. If no installed skill matches deterministically, say so explicitly and
+    fall back to a generic workflow description without fabricating a command.
+
+### Example: vague feature idea
+
+If the project moment is `idea` or `specification`, and the installed registry
+contains:
+
+```text
+/grill-me
+/to-spec
+/to-tickets
+/implement
+```
+
+prefer:
+
+```text
+/grill-me
+→ /to-spec
+```
+
+Do not merely say:
+
+```text
+requirements clarification
+→ specification
+```
+
+### Example: implementation
+
+If the work is defined and `/implement` and `/tdd` are installed, a suitable
+sequence may be:
+
+```text
+/tdd
+→ /implement
+```
+
+or:
+
+```text
+/implement
+→ /tdd
+```
+
+depending on whether the task is explicitly test-first. Use the user's intent
+and the resolver's capability matches to choose the smallest sensible sequence.
+
+### Example: completed change
+
+If `/code-review` is installed:
+
+```text
+/code-review
+```
+
+should be recommended instead of the generic phrase "review the code".
+
 ## Routing
 
-Use `references/skill-routing.md` to choose task workflows.
+Use `.agents/SKILL_REGISTRY.json` and the deterministic resolver first when
+choosing an exact installed skill.
+
+Use `references/skill-routing.md` to understand workflow sequencing and
+fallback behavior.
 
 Use `references/tool-routing.md` to choose capabilities.
 
@@ -566,28 +763,112 @@ UEL_REFERENCES_PROJECT_MOMENTS_MD
   cat > "$base/references/skill-routing.md" <<'UEL_REFERENCES_SKILL_ROUTING_MD'
 # Skill Routing
 
-The exact Matt Pocock skill names may change upstream. Match by purpose, not only by filename.
+The Engineering Companion must route against the **actual installed skill
+inventory**, not a hypothetical list of workflow names.
 
-| Situation | Preferred workflow |
+Authoritative registry:
+
+```text
+.agents/SKILL_REGISTRY.json
+```
+
+Deterministic resolver:
+
+```text
+.agents/skills/engineering-companion/scripts/resolve-skill.py
+```
+
+## Exact-name rule
+
+If an installed skill can satisfy the need, recommend its exact slash command.
+
+Good:
+
+```text
+/grill-me
+/to-spec
+/code-review
+```
+
+Avoid:
+
+```text
+requirements clarification skill
+specification workflow
+review skill
+```
+
+unless no installed exact match exists.
+
+Never invent a slash command.
+
+## Typical deterministic routing
+
+The exact available skills depend on what is installed. These examples apply
+only when the named skills are present in the registry.
+
+| Situation | Preferred installed sequence |
 |---|---|
-| Unclear idea | requirements / clarification / specification |
-| Defined feature | implementation |
-| Behavior-first change | TDD |
-| Existing bug | debugging / triage |
-| Major structural change | planning + implementation/refactor |
-| Finished code | code review |
-| Large task | specification → tickets/tasks → implementation |
-| Prototype/unknown feasibility | prototype |
-| Repository unfamiliar | exploration / wayfinding |
-| Documentation change | documentation workflow |
+| Vague product idea | `/grill-me` → `/to-spec` |
+| Existing docs need interrogation | `/grill-with-docs` → `/to-spec` |
+| Clear spec needs decomposition | `/to-tickets` |
+| Defined implementation | `/implement` |
+| Test-first implementation | `/tdd` → `/implement` |
+| Existing bug | `/triage` → `/tdd` → `/implement` |
+| Unfamiliar repository | `/wayfinder` |
+| Prototype / feasibility question | `/prototype` |
+| Finished code | `/code-review` |
+| Large feature lifecycle | `/grill-me` → `/to-spec` → `/to-tickets` → `/implement` → `/code-review` |
+
+The resolver trims this list to skills that are actually installed.
+
+## Capability-based matching
+
+The generated registry assigns capabilities inferred from the exact skill
+metadata and known skill semantics.
+
+Examples:
+
+```text
+grill-me
+→ requirements-clarification
+→ assumption-challenging
+→ product-discovery
+
+to-spec
+→ specification
+→ requirements-formalization
+→ acceptance-criteria
+
+to-tickets
+→ planning
+→ task-decomposition
+→ ticket-generation
+
+tdd
+→ test-driven-development
+→ testing
+→ regression-prevention
+
+code-review
+→ code-review
+→ quality-review
+```
+
+This lets the companion continue to work even when additional local skills are
+added.
 
 ## Routing principles
 
-1. Apply the Karpathy baseline continuously.
-2. Load only the task-specific skill(s) needed for the current moment.
-3. Avoid stacking multiple overlapping workflows unless the task genuinely spans them.
-4. Re-evaluate the moment after a major transition.
-5. When implementation completes, transition toward testing/review rather than continuing to generate code.
+1. Karpathy remains the baseline engineering behavior.
+2. The Engineering Companion is the router, not the destination.
+3. Inspect the installed registry before recommending a task skill.
+4. Prefer exact installed slash commands.
+5. Use the smallest sequence that covers the current project moment.
+6. Re-evaluate after each major transition.
+7. Do not continue implementation when the moment has clearly shifted to
+   testing, review, or release.
+8. If no installed skill matches, say so instead of inventing one.
 UEL_REFERENCES_SKILL_ROUTING_MD
   cat > "$base/references/tool-routing.md" <<'UEL_REFERENCES_TOOL_ROUTING_MD'
 # Tool Routing
@@ -734,12 +1015,39 @@ moment="discovery"
 risk="low"
 reasons=()
 
+is_uel_infrastructure_path() {
+  local p="$1"
+  case "$p" in
+    how-to.html|ENGINEERS.md|AGENTS.md|CLAUDE.md|CONTEXT.md|.gitignore) return 0 ;;
+    .agents|.agents/*) return 0 ;;
+    .claude/skills|.claude/skills/*) return 0 ;;
+    .codex/skills|.codex/skills/*) return 0 ;;
+    .opencode/skills|.opencode/skills/*) return 0 ;;
+    .openclaw/skills|.openclaw/skills/*) return 0 ;;
+    .github/copilot-instructions.md) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+filtered_status() {
+  local line path
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    path="${line:3}"
+    # Git renames can appear as "old -> new"; use the destination.
+    [[ "$path" == *" -> "* ]] && path="${path##* -> }"
+    is_uel_infrastructure_path "$path" && continue
+    printf '%s\n' "$line"
+  done
+}
+
+
 if git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git_ok=1
   branch="$(git -C "$ROOT" branch --show-current 2>/dev/null || true)"
   [[ -n "$branch" ]] || branch="detached"
 
-  status="$(git -C "$ROOT" status --porcelain 2>/dev/null || true)"
+  status="$(git -C "$ROOT" status --porcelain --untracked-files=all 2>/dev/null | filtered_status || true)"
   if [[ -n "$status" ]]; then
     dirty=1
     changed="$(printf '%s\n' "$status" | grep -vc '^??' || true)"
@@ -808,7 +1116,11 @@ if [[ "$git_ok" -eq 1 ]]; then
     {
       git -C "$ROOT" diff --name-only 2>/dev/null || true
       git -C "$ROOT" diff --cached --name-only 2>/dev/null || true
-    } | sort -u
+    } | while IFS= read -r p; do
+          [[ -n "$p" ]] || continue
+          is_uel_infrastructure_path "$p" && continue
+          printf '%s\n' "$p"
+        done | sort -u
   )"
 fi
 
@@ -885,24 +1197,427 @@ for r in "${reasons[@]}"; do
   printf '  - %s\n' "$r"
 done
 UEL_SCRIPTS_PROJECT_STATE_SH
+  cat > "$base/scripts/generate-skill-registry.py" <<'UEL_SCRIPTS_GENERATE_SKILL_REGISTRY_PY'
+#!/usr/bin/env python3
+"""Build a deterministic capability registry from installed SKILL.md files."""
+
+from __future__ import annotations
+import argparse
+import json
+import re
+from pathlib import Path
+
+KNOWN = {
+    "grill-me": {
+        "capabilities": ["requirements-clarification", "assumption-challenging", "product-discovery", "specification"],
+        "moments": ["idea", "discovery", "specification"],
+        "priority": 100,
+    },
+    "grill-with-docs": {
+        "capabilities": ["requirements-clarification", "assumption-challenging", "document-analysis", "specification"],
+        "moments": ["discovery", "specification"],
+        "priority": 100,
+    },
+    "to-spec": {
+        "capabilities": ["specification", "requirements-formalization", "acceptance-criteria"],
+        "moments": ["specification", "planning"],
+        "priority": 95,
+    },
+    "to-tickets": {
+        "capabilities": ["planning", "task-decomposition", "ticket-generation"],
+        "moments": ["planning"],
+        "priority": 90,
+    },
+    "implement": {
+        "capabilities": ["implementation", "feature-development"],
+        "moments": ["implementation", "integration"],
+        "priority": 90,
+    },
+    "tdd": {
+        "capabilities": ["test-driven-development", "testing", "regression-prevention", "implementation"],
+        "moments": ["implementation", "testing", "debugging", "refactoring"],
+        "priority": 95,
+    },
+    "code-review": {
+        "capabilities": ["code-review", "quality-review", "maintainability-review"],
+        "moments": ["review", "pre-commit", "pull-request"],
+        "priority": 95,
+    },
+    "prototype": {
+        "capabilities": ["prototyping", "feasibility", "exploration"],
+        "moments": ["idea", "discovery"],
+        "priority": 85,
+    },
+    "triage": {
+        "capabilities": ["debugging", "triage", "root-cause-analysis"],
+        "moments": ["debugging", "production-incident"],
+        "priority": 95,
+    },
+    "wayfinder": {
+        "capabilities": ["repository-exploration", "codebase-navigation", "discovery"],
+        "moments": ["discovery"],
+        "priority": 90,
+    },
+}
+
+CAPABILITY_KEYWORDS = {
+    "requirements-clarification": ["clarif", "requirements", "grill", "question", "ambigu"],
+    "assumption-challenging": ["assumption", "challenge", "grill", "interrogate"],
+    "product-discovery": ["discovery", "product idea", "idea", "requirements"],
+    "specification": ["spec", "specification", "requirements", "acceptance criteria"],
+    "requirements-formalization": ["formalize", "spec", "requirements"],
+    "acceptance-criteria": ["acceptance", "criteria"],
+    "planning": ["plan", "planning", "break down", "decompose"],
+    "task-decomposition": ["ticket", "task", "decompose", "break down"],
+    "ticket-generation": ["ticket", "issue"],
+    "implementation": ["implement", "implementation", "build", "code"],
+    "feature-development": ["feature", "implement"],
+    "test-driven-development": ["tdd", "test driven", "red green refactor"],
+    "testing": ["test", "testing", "verify"],
+    "regression-prevention": ["regression", "test"],
+    "code-review": ["code review", "review code", "review"],
+    "quality-review": ["quality", "review"],
+    "maintainability-review": ["maintainability", "review"],
+    "prototyping": ["prototype", "spike", "proof of concept"],
+    "feasibility": ["feasibility", "prototype", "spike"],
+    "exploration": ["explore", "discovery", "prototype"],
+    "debugging": ["debug", "bug", "error", "failure", "fix"],
+    "triage": ["triage", "bug", "incident"],
+    "root-cause-analysis": ["root cause", "debug", "trace"],
+    "repository-exploration": ["repository", "codebase", "explore", "wayfind"],
+    "codebase-navigation": ["navigate", "repository", "codebase", "find"],
+    "document-analysis": ["document", "docs", "prd", "brief"],
+}
+
+MOMENT_KEYWORDS = {
+    "idea": ["idea", "concept", "brainstorm", "prototype"],
+    "discovery": ["discover", "explore", "understand", "repository", "codebase"],
+    "specification": ["spec", "requirements", "acceptance", "clarify", "grill"],
+    "planning": ["plan", "tickets", "tasks", "decompose"],
+    "implementation": ["implement", "build", "feature", "code"],
+    "debugging": ["bug", "debug", "error", "failure", "broken", "fix"],
+    "refactoring": ["refactor", "cleanup", "restructure"],
+    "testing": ["test", "verify", "coverage", "regression"],
+    "review": ["review", "audit", "quality"],
+    "integration": ["integrate", "integration", "connect"],
+    "pre-commit": ["pre-commit", "before commit", "staged"],
+    "pull-request": ["pull request", "pr", "ci"],
+    "release": ["release", "deploy", "publish"],
+    "production-incident": ["production", "incident", "outage", "hotfix"],
+    "maintenance": ["maintenance", "dependency", "upgrade", "technical debt"],
+}
+
+
+def parse_frontmatter(text: str) -> dict[str, str]:
+    if not text.startswith("---"):
+        return {}
+    parts = text.split("---", 2)
+    if len(parts) < 3:
+        return {}
+    out: dict[str, str] = {}
+    for line in parts[1].splitlines():
+        if ":" in line:
+            k, v = line.split(":", 1)
+            out[k.strip()] = v.strip().strip("'\"")
+    return out
+
+
+def infer(name: str, description: str, text: str) -> tuple[list[str], list[str], int]:
+    known = KNOWN.get(name, {})
+    capabilities = set(known.get("capabilities", []))
+    moments = set(known.get("moments", []))
+    priority = int(known.get("priority", 50))
+
+    # Known upstream skills use curated routing semantics so generic words in
+    # their descriptions do not accidentally make them match unrelated stages.
+    # Unknown/local skills still get capability inference from their metadata.
+    if not known:
+        hay = f"{name} {description} {text[:4000]}".lower()
+
+        for cap, words in CAPABILITY_KEYWORDS.items():
+            if any(w in hay for w in words):
+                capabilities.add(cap)
+
+        for moment, words in MOMENT_KEYWORDS.items():
+            if any(w in hay for w in words):
+                moments.add(moment)
+
+    if name == "engineering-companion":
+        capabilities.update(["workflow-routing", "skill-selection", "risk-assessment"])
+        moments.update(MOMENT_KEYWORDS)
+        priority = 10
+
+    if name == "karpathy-guidelines":
+        capabilities.update(["engineering-baseline", "change-discipline", "verification"])
+        priority = 5
+
+    return sorted(capabilities), sorted(moments), priority
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--skills-dir", required=True)
+    ap.add_argument("--output", required=True)
+    args = ap.parse_args()
+
+    skills_dir = Path(args.skills_dir)
+    output = Path(args.output)
+    entries = []
+
+    for skill_file in sorted(skills_dir.glob("*/SKILL.md")):
+        text = skill_file.read_text(encoding="utf-8", errors="replace")
+        meta = parse_frontmatter(text)
+        folder = skill_file.parent.name
+        name = meta.get("name") or folder
+        description = meta.get("description", "")
+        capabilities, moments, priority = infer(name, description, text)
+
+        entries.append({
+            "name": name,
+            "folder": folder,
+            "command": f"/{name}",
+            "description": description,
+            "capabilities": capabilities,
+            "moments": moments,
+            "routing_priority": priority,
+            "path": str(skill_file),
+            "source": (
+                "universal-engineering-layer"
+                if name in {"engineering-companion"}
+                else "installed-upstream-or-local"
+            ),
+        })
+
+    registry = {
+        "schema_version": 1,
+        "purpose": "Deterministic installed-skill routing registry for Engineering Companion",
+        "rules": {
+            "exact_installed_names_only": True,
+            "prefer_installed_skill_over_generic_workflow_label": True,
+            "allow_ordered_sequences": True,
+            "exclude_from_task_skill_routing": ["engineering-companion", "karpathy-guidelines"],
+        },
+        "skills": entries,
+    }
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(registry, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Wrote {len(entries)} skills to {output}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+UEL_SCRIPTS_GENERATE_SKILL_REGISTRY_PY
+  cat > "$base/scripts/resolve-skill.py" <<'UEL_SCRIPTS_RESOLVE_SKILL_PY'
+#!/usr/bin/env python3
+"""Resolve the best exact installed skill(s) for a project moment and task."""
+
+from __future__ import annotations
+import argparse
+import json
+import re
+from pathlib import Path
+
+MOMENT_TARGETS = {
+    "idea": ["requirements-clarification", "assumption-challenging", "product-discovery", "prototyping"],
+    "discovery": ["repository-exploration", "codebase-navigation", "product-discovery", "exploration"],
+    "specification": ["requirements-clarification", "assumption-challenging", "specification", "requirements-formalization"],
+    "planning": ["planning", "task-decomposition", "ticket-generation", "specification"],
+    "implementation": ["implementation", "test-driven-development", "feature-development"],
+    "debugging": ["debugging", "triage", "root-cause-analysis", "regression-prevention"],
+    "refactoring": ["test-driven-development", "implementation", "code-review", "regression-prevention"],
+    "testing": ["testing", "test-driven-development", "regression-prevention", "code-review"],
+    "review": ["code-review", "quality-review", "maintainability-review"],
+    "integration": ["implementation", "testing", "code-review"],
+    "pre-commit": ["code-review", "testing", "quality-review"],
+    "pull-request": ["code-review", "testing", "quality-review"],
+    "release": ["code-review", "testing", "quality-review"],
+    "production-incident": ["triage", "debugging", "root-cause-analysis", "regression-prevention"],
+    "maintenance": ["code-review", "testing", "implementation"],
+}
+
+PREFERRED_EXACT_SEQUENCES = {
+    "idea": ["grill-me", "prototype", "to-spec"],
+    "discovery": ["wayfinder", "grill-with-docs", "prototype"],
+    "specification": ["grill-me", "grill-with-docs", "to-spec"],
+    "planning": ["to-spec", "to-tickets"],
+    "implementation": ["implement"],
+    "debugging": ["triage", "tdd", "implement"],
+    "refactoring": ["tdd", "implement", "code-review"],
+    "testing": ["tdd", "code-review"],
+    "review": ["code-review"],
+    "integration": ["implement", "code-review"],
+    "pre-commit": ["code-review"],
+    "pull-request": ["code-review"],
+    "release": ["code-review"],
+    "production-incident": ["triage", "tdd", "implement"],
+    "maintenance": ["code-review", "implement"],
+}
+
+TASK_SIGNALS = {
+    "requirements-clarification": ["unclear", "vague", "not sure", "idea", "requirements", "clarify", "questions", "grill"],
+    "assumption-challenging": ["challenge assumptions", "grill", "poke holes", "question me", "stress test idea"],
+    "specification": ["spec", "specification", "prd", "requirements", "acceptance criteria"],
+    "planning": ["plan", "roadmap", "steps"],
+    "task-decomposition": ["tickets", "tasks", "break down", "decompose"],
+    "ticket-generation": ["tickets", "issues"],
+    "implementation": ["implement", "build", "code", "add feature"],
+    "test-driven-development": ["tdd", "test first", "red green", "regression test"],
+    "testing": ["test", "verify", "coverage"],
+    "code-review": ["review", "code review", "audit"],
+    "prototyping": ["prototype", "proof of concept", "spike"],
+    "debugging": ["bug", "debug", "broken", "error", "fails", "failure"],
+    "triage": ["triage", "incident", "production bug"],
+    "repository-exploration": ["understand codebase", "explore repo", "where is", "how does this code"],
+    "codebase-navigation": ["find in codebase", "navigate", "where is"],
+}
+
+
+def task_targets(task: str) -> list[str]:
+    t = task.lower()
+    found = []
+    for cap, signals in TASK_SIGNALS.items():
+        if any(sig in t for sig in signals):
+            found.append(cap)
+    return found
+
+
+def score(skill: dict, targets: list[str], moment: str) -> tuple[int, list[str]]:
+    caps = set(skill.get("capabilities", []))
+    matches = [t for t in targets if t in caps]
+    s = len(matches) * 100
+    if moment and moment in skill.get("moments", []):
+        s += 35
+    s += int(skill.get("routing_priority", 0))
+    return s, matches
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--registry", required=True)
+    ap.add_argument("--moment", default="")
+    ap.add_argument("--task", default="")
+    ap.add_argument("--limit", type=int, default=4)
+    ap.add_argument("--json", action="store_true")
+    args = ap.parse_args()
+
+    data = json.loads(Path(args.registry).read_text(encoding="utf-8"))
+    excluded = set(data.get("rules", {}).get("exclude_from_task_skill_routing", []))
+    moment = args.moment.strip().lower()
+    targets = list(MOMENT_TARGETS.get(moment, []))
+    for t in task_targets(args.task):
+        if t not in targets:
+            targets.insert(0, t)
+
+    ranked = []
+    for skill in data.get("skills", []):
+        if skill.get("name") in excluded:
+            continue
+        s, matches = score(skill, targets, moment)
+        if s > int(skill.get("routing_priority", 0)):  # require at least one semantic/moment signal
+            ranked.append({
+                "name": skill["name"],
+                "command": skill.get("command", "/" + skill["name"]),
+                "description": skill.get("description", ""),
+                "score": s,
+                "matched_capabilities": matches,
+                "moment_match": moment in skill.get("moments", []),
+            })
+
+    ranked.sort(key=lambda x: (-x["score"], x["name"]))
+
+    # Deterministic workflow sequencing:
+    # 1) prefer curated exact upstream skill sequences when those skills exist;
+    # 2) only include exact names present in the installed registry;
+    # 3) use capability-ranked fallback for unknown/local skills.
+    by_name = {x["name"]: x for x in ranked}
+    installed = {
+        x["name"]: x for x in data.get("skills", [])
+        if x.get("name") not in excluded
+    }
+
+    preferred = list(PREFERRED_EXACT_SEQUENCES.get(moment, []))
+
+    # Explicit test-first intent moves /tdd before /implement.
+    task_lower = args.task.lower()
+    if moment == "implementation" and any(
+        sig in task_lower for sig in ["tdd", "test first", "test-driven", "red green"]
+    ):
+        preferred = ["tdd", "implement"]
+
+    sequence = []
+    used = set()
+
+    for name in preferred:
+        if name in installed and name in by_name and name not in used:
+            sequence.append(by_name[name])
+            used.add(name)
+        if len(sequence) >= args.limit:
+            break
+
+    # Fill only if the preferred exact sequence did not adequately resolve the
+    # request. Unknown/local skills can still participate via capabilities.
+    if not sequence:
+        for candidate in ranked:
+            if candidate["name"] not in used:
+                sequence.append(candidate)
+                used.add(candidate["name"])
+            if len(sequence) >= args.limit:
+                break
+
+    result = {
+        "moment": moment or None,
+        "task": args.task or None,
+        "target_capabilities": targets,
+        "recommended_sequence": sequence,
+        "all_ranked_matches": ranked[:10],
+        "fallback": (
+            None if ranked else
+            "No installed task-specific skill matched deterministically. Use the closest project workflow manually; do not invent a skill name."
+        ),
+    }
+
+    if args.json:
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        if sequence:
+            print("Recommended installed skill sequence:")
+            for i, x in enumerate(sequence, 1):
+                caps = ", ".join(x["matched_capabilities"]) or "moment match"
+                print(f"{i}. {x['command']}  [{caps}]")
+        else:
+            print(result["fallback"])
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+UEL_SCRIPTS_RESOLVE_SKILL_PY
   chmod +x "$base/scripts/project-state.sh"
+  chmod +x "$base/scripts/generate-skill-registry.py"
+  chmod +x "$base/scripts/resolve-skill.py"
   ok "Engineering Companion skill installed."
 }
 
 ensure_how_to_gitignored() {
   local gi="$PROJECT_ROOT/.gitignore"
+  local marker="# Universal Engineering Layer local tutorial"
   local entry="how-to.html"
+
   touch "$gi"
 
-  if ! grep -Fxq "$entry" "$gi"; then
-    if [[ -s "$gi" && "$(tail -c 1 "$gi" | wc -l)" -eq 0 ]]; then
-      printf '\n' >> "$gi"
-    fi
-    printf '\n# Universal Engineering Layer local tutorial\n%s\n' "$entry" >> "$gi"
-    ok "Added how-to.html to .gitignore."
-  else
+  if grep -Fxq "$entry" "$gi" 2>/dev/null; then
     ok "how-to.html already ignored."
+    return 0
   fi
+
+  if [[ -s "$gi" ]]; then
+    printf '\n' >> "$gi"
+  fi
+
+  printf '%s\n%s\n' "$marker" "$entry" >> "$gi"
+  ok "Added how-to.html to .gitignore."
 }
 
 write_how_to() {
@@ -1219,8 +1934,10 @@ write_how_to() {
         <a href="#overview">Overview</a>
         <a href="#stack">The skill stack</a>
         <a href="#companion">Engineering Companion</a>
+        <a href="#using-companion">Using the companion</a>
         <a href="#moments">Project moments</a>
         <a href="#routing">How routing works</a>
+        <a href="#exact-routing">Exact skill routing</a>
         <a href="#profiles">Profiles</a>
         <a href="#workflow">Typical workflow</a>
         <a href="#commands">Commands</a>
@@ -1318,6 +2035,81 @@ write_how_to() {
           </div>
         </section>
 
+        
+        <section id="using-companion">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Practical usage</div>
+              <h2>How to use the Engineering Companion</h2>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <span class="tag">Claude Code & skill-aware harnesses</span>
+              <h3>Invoke the meta-skill directly</h3>
+              <p>When your harness exposes installed skills as slash commands, run:</p>
+              <pre>/engineering-companion</pre>
+              <p>Or give it a focused request:</p>
+              <pre>/engineering-companion what should I do next?
+
+/engineering-companion assess the risk of this refactor
+
+/engineering-companion which skill should I use for this bug?</pre>
+              <p class="muted">
+                This is the richest mode because the skill can combine your active request
+                with project state and whatever tools the harness exposes.
+              </p>
+            </div>
+
+            <div class="card">
+              <span class="tag">Terminal</span>
+              <h3>Ask from the shell</h3>
+              <p>The portable repository-state detector is always available:</p>
+              <pre>engineering-layer companion</pre>
+              <p>or from a local copy:</p>
+              <pre>./universal-engineering-layer.sh companion</pre>
+              <p class="muted">
+                The shell mode uses Git and repository signals. It does not know as much
+                about your current conversational intent as the slash-command skill.
+              </p>
+              <p class="muted">
+                UEL-generated infrastructure is excluded from project-moment detection,
+                so installing the layer itself does not look like product implementation work.
+              </p>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top:18px">
+            <strong>Automatic routing:</strong>
+            compatible harnesses may also select the Engineering Companion automatically
+            when you are clearly asking what to do next, how risky a change is, or which
+            engineering workflow should be used.
+          </div>
+
+          <div class="card" style="margin-top:18px;border-color:rgba(253,230,138,.28);background:rgba(253,230,138,.045)">
+            <span class="tag">Important distinction</span>
+            <h3><code>how-to.html</code> is this tutorial — not your project's PRD</h3>
+            <p>
+              This file exists only to explain the Universal Engineering Layer. The
+              Engineering Companion is explicitly instructed <strong>not</strong> to use
+              it as a project seed, product specification, requirements document, design
+              brief, or source of product intent.
+            </p>
+            <p>
+              To understand what your project is meant to become, the agent should prefer
+              your current request, <code>CONTEXT.md</code>, actual project documentation,
+              ADRs, source code, tests, issues, and Git history.
+            </p>
+            <pre>how-to.html
+→ Universal Engineering Layer tutorial
+
+CONTEXT.md / actual project docs / user request
+→ project intent</pre>
+          </div>
+        </section>
+
+
         <section id="moments">
           <div class="section-head">
             <div>
@@ -1382,6 +2174,69 @@ GitHub MCP → issues / PRs / CI</pre>
             </div>
           </div>
         </section>
+
+        
+        <section id="exact-routing">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Installed skill intelligence</div>
+              <h2>Exact, deterministic skill routing</h2>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <span class="tag">Generated inventory</span>
+              <h3>The companion knows what is actually installed</h3>
+              <p>
+                Installation scans every <code>SKILL.md</code> and generates
+                <code>.agents/SKILL_REGISTRY.json</code>.
+              </p>
+              <pre>.agents/SKILL_REGISTRY.json</pre>
+            </div>
+            <div class="card">
+              <span class="tag">Hard rule</span>
+              <h3>No invented commands</h3>
+              <p>
+                The companion recommends exact installed skill commands.
+                If no matching skill is installed, it says so instead of inventing one.
+              </p>
+              <pre>GOOD
+/grill-me
+/to-spec
+/code-review
+
+BAD
+/some-made-up-skill</pre>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:18px">
+            <h3>Example: vague feature idea</h3>
+            <pre>User: "I have an idea, but the requirements are still vague."
+
+Engineering Companion:
+1. /grill-me
+2. /to-spec</pre>
+            <p class="muted">
+              These are the real installed Matt Pocock skill names, not generic workflow labels.
+            </p>
+          </div>
+
+          <div class="card" style="margin-top:18px">
+            <h3>Example lifecycle</h3>
+            <pre>/grill-me
+  ↓
+/to-spec
+  ↓
+/to-tickets
+  ↓
+/implement
+  ↓
+/code-review</pre>
+          </div>
+        </section>
+
 
         <section id="profiles">
           <div class="section-head">
@@ -1559,7 +2414,7 @@ ENGINEERING CAPABILITIES
 </body>
 </html>
 UEL_HOW_TO_HTML
-  ok "Created how-to.html tutorial."
+  ok "Created how-to.html local tutorial."
 }
 
 write_engineering_policy() {
@@ -1599,6 +2454,26 @@ In particular:
 - Define what success means before substantial changes.
 - Verify work with the strongest available checks.
 - Never claim a test, build, lint, or verification step was run when it was not.
+
+## Universal Engineering Layer reserved files
+
+The following files describe the engineering environment itself and are not
+product requirements:
+
+- `how-to.html`
+- `ENGINEERS.md`
+- `.agents/ENGINEERING.md`
+- `.agents/SKILLS.md`
+- `.agents/mcp/`
+- `.agents/rules/`
+- `.agents/skills/engineering-companion/`
+
+Most importantly, `how-to.html` is a generated Universal Engineering Layer
+tutorial. Never treat it as a PRD, project seed, product specification,
+requirements document, or design brief.
+
+Determine project intent from the user's request, `CONTEXT.md`, real project
+documentation, ADRs, source code, tests, issues, and repository history.
 
 ## Engineering Companion
 
@@ -1983,6 +2858,23 @@ PY
   done < <(find "$SKILLS_DIR" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
 }
 
+generate_skill_registry() {
+  local generator="$SKILLS_DIR/engineering-companion/scripts/generate-skill-registry.py"
+  local registry="$AGENTS_DIR/SKILL_REGISTRY.json"
+
+  if [[ ! -x "$generator" ]]; then
+    fail "Skill registry generator is missing."
+    return 1
+  fi
+
+  python3 "$generator" \
+    --skills-dir "$SKILLS_DIR" \
+    --output "$registry" >/dev/null
+
+  ok "Generated deterministic installed-skill registry."
+}
+
+
 write_context_template() {
   [[ "$CREATE_CONTEXT" -eq 1 ]] || return 0
   [[ ! -e "$PROJECT_ROOT/CONTEXT.md" ]] || return 0
@@ -2099,10 +2991,21 @@ $BEGIN_CLAUDE
 @.agents/SKILLS.md
 
 For engineering tasks, use \`.agents/skills/karpathy-guidelines/SKILL.md\` as
-the baseline and load task-specific skills from \`.agents/skills/\` when
-relevant.
+the baseline. Use \`.agents/skills/engineering-companion/SKILL.md\` to route
+ambiguous or multi-stage work, then load task-specific skills from
+\`.agents/skills/\` when relevant.
 
 Read \`CONTEXT.md\` when present and relevant ADRs under \`.agents/adr/\`.
+
+IMPORTANT: \`how-to.html\` is generated documentation for the Universal
+Engineering Layer itself. It is NOT the target project's PRD, project seed,
+product specification, requirements document, design brief, or source of
+product intent. Never infer what the user's software should become from
+\`how-to.html\`.
+
+Determine project intent from the user's request, \`CONTEXT.md\`, actual
+project documentation, ADRs, source code, tests, issues, and repository
+history.
 
 $END_CLAUDE
 EOF
@@ -2441,6 +3344,7 @@ status_cmd() {
   [[ -f "$AGENTS_DIR/ENGINEERING.md" ]] && ok ".agents/ENGINEERING.md" || warn ".agents/ENGINEERING.md missing"
   [[ -f "$SKILLS_DIR/karpathy-guidelines/SKILL.md" ]] && ok "Karpathy baseline" || warn "Karpathy baseline missing"
   [[ -f "$SKILLS_DIR/engineering-companion/SKILL.md" ]] && ok "Engineering Companion" || warn "Engineering Companion missing"
+  [[ -f "$AGENTS_DIR/SKILL_REGISTRY.json" ]] && ok "Deterministic skill registry" || warn "Skill registry missing"
 
   local n=0
   [[ -d "$SKILLS_DIR" ]] && n="$(find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ')"
@@ -2489,6 +3393,9 @@ doctor_cmd() {
   [[ -f "$SKILLS_DIR/karpathy-guidelines/SKILL.md" ]] && ok "Karpathy skill present" || { fail "Karpathy skill missing"; problems=$((problems+1)); }
   [[ -f "$SKILLS_DIR/engineering-companion/SKILL.md" ]] && ok "Engineering Companion skill present" || { fail "Engineering Companion skill missing"; problems=$((problems+1)); }
   [[ -x "$SKILLS_DIR/engineering-companion/scripts/project-state.sh" ]] && ok "Companion project-state detector executable" || { fail "Companion state detector missing/not executable"; problems=$((problems+1)); }
+  [[ -x "$SKILLS_DIR/engineering-companion/scripts/generate-skill-registry.py" ]] && ok "Skill registry generator executable" || { fail "Skill registry generator missing/not executable"; problems=$((problems+1)); }
+  [[ -x "$SKILLS_DIR/engineering-companion/scripts/resolve-skill.py" ]] && ok "Deterministic skill resolver executable" || { fail "Skill resolver missing/not executable"; problems=$((problems+1)); }
+  [[ -f "$AGENTS_DIR/SKILL_REGISTRY.json" ]] && ok "Installed-skill registry present" || { fail "Installed-skill registry missing"; problems=$((problems+1)); }
 
   local total bad=0
   total="$(find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md 2>/dev/null | wc -l | tr -d ' ')"
@@ -2510,7 +3417,7 @@ doctor_cmd() {
   check_link "$PROJECT_ROOT/.claude/skills" "../.agents/skills" "Claude skills link" || true
   check_link "$PROJECT_ROOT/.codex/skills" "../.agents/skills" "Codex skills compatibility link" || true
 
-  if has hermes || [[ -d "${HERMES_HOME:-$HOME/.hermes}" ]]; then
+  if [[ "$CONFIGURE_HERMES" -eq 1 ]] && { has hermes || [[ -d "${HERMES_HOME:-$HOME/.hermes}" ]]; }; then
     local cfg
     cfg="$(hermes_config_path)"
     if [[ -f "$cfg" ]] && grep -Fq -- "- $SKILLS_DIR" "$cfg"; then
@@ -2579,26 +3486,29 @@ remove_cmd() {
   # Remove only canonical UEL content. Preserve ADRs because they may contain
   # real project decisions authored after installation.
   rm -rf "$SKILLS_DIR" "$STATE_DIR"
-  rm -f "$AGENTS_DIR/ENGINEERING.md" "$AGENTS_DIR/SKILLS.md" "$PROJECT_ROOT/ENGINEERS.md"
+  rm -f "$AGENTS_DIR/ENGINEERING.md" "$AGENTS_DIR/SKILLS.md" "$AGENTS_DIR/SKILL_REGISTRY.json" "$PROJECT_ROOT/ENGINEERS.md"
   rm -f "$PROJECT_ROOT/how-to.html"
 
   if [[ -f "$PROJECT_ROOT/.gitignore" ]]; then
     python3 - "$PROJECT_ROOT/.gitignore" <<'PY'
 from pathlib import Path
 import sys
+
 p = Path(sys.argv[1])
 lines = p.read_text(encoding="utf-8").splitlines()
+marker = "# Universal Engineering Layer local tutorial"
+entry = "how-to.html"
 out = []
-skip_comment = False
-for line in lines:
-    if line.strip() == "# Universal Engineering Layer local tutorial":
-        skip_comment = True
+i = 0
+while i < len(lines):
+    if lines[i] == marker and i + 1 < len(lines) and lines[i + 1] == entry:
+        i += 2
+        if out and out[-1] == "":
+            out.pop()
         continue
-    if skip_comment and line.strip() == "how-to.html":
-        skip_comment = False
-        continue
-    skip_comment = False
-    out.append(line)
+    out.append(lines[i])
+    i += 1
+
 text = "\n".join(out).rstrip()
 if text:
     p.write_text(text + "\n", encoding="utf-8")
@@ -2635,6 +3545,7 @@ install_cmd() {
   write_how_to
   ensure_how_to_gitignored
   generate_skill_index
+  generate_skill_registry
   write_context_template
   install_engineering_tools
 
@@ -2652,8 +3563,9 @@ install_cmd() {
   printf 'Canonical layer:\n'
   printf '  .agents/ENGINEERING.md\n'
   printf '  .agents/SKILLS.md\n'
+  printf '  .agents/SKILL_REGISTRY.json\n'
   printf '  ENGINEERS.md\n'
-  printf '  how-to.html (gitignored local tutorial)\n'
+  printf '  how-to.html (local tutorial; gitignored)\n'
   printf '  .agents/skills/\n'
   printf '\n'
   printf 'Adapters:\n'

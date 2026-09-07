@@ -1,5 +1,7 @@
 # Universal Engineering Layer
 
+**One engineering layer for AI-assisted software development: skills, capabilities, and an agentic companion that knows what to use when.**
+
 A portable engineering environment and automated Engineering Companion for AI coding agents.
 
 Universal Engineering Layer gives a software project one shared engineering policy, one shared skill set, one shared tool hierarchy, an automated **Engineering Companion** meta-skill, and lightweight adapters for multiple AI coding harnesses.
@@ -16,6 +18,370 @@ It is designed for projects that may be worked on with different agents over tim
 - other compatible coding agents
 
 Instead of maintaining separate engineering instructions for every harness, the project keeps one canonical source of truth.
+
+---
+
+
+
+# What Universal Engineering Layer does
+
+Universal Engineering Layer gives a software project a consistent, reusable
+AI engineering environment across coding agents, IDEs, and harnesses.
+
+It does **three things for you**:
+
+## 1. Installs a proven engineering skill stack
+
+Universal Engineering Layer brings in and organizes two complementary
+engineering skill systems:
+
+- **Karpathy Guidelines** as the always-on engineering discipline and behavior
+  baseline;
+- **Matt Pocock's engineering skills** as task-specific workflows for moments
+  such as requirements clarification, specification, implementation, TDD,
+  debugging, review, and planning.
+
+The result is not just a collection of prompts. It gives compatible agents a
+shared way to think about engineering quality, scope, risk, and execution.
+
+## 2. Adds an engineering capability layer
+
+Universal Engineering Layer can install or configure supporting engineering
+tools and MCP capabilities that make agents materially better at understanding
+and verifying real software projects.
+
+Depending on the selected profile, this can include:
+
+- `codebase-memory-mcp` for persistent code intelligence and repository
+  understanding;
+- Context7 guidance for current framework and library documentation;
+- `ast-grep` for structural code search and transformation;
+- `ripgrep`, `fd`, `jq`, and `yq` for fast repository and data inspection;
+- Playwright MCP guidance for browser and runtime verification;
+- GitHub MCP guidance for issues, pull requests, CI, and remote repository
+  context.
+
+The goal is to give agents the right **capabilities**, not merely more text
+instructions.
+
+## 3. Provides a true agentic Engineering Companion
+
+Universal Engineering Layer includes the **Engineering Companion**, a
+meta-skill that helps the user and the AI navigate the entire engineering
+environment.
+
+It identifies the current engineering moment, evaluates risk, inspects the
+skills actually installed in the project, and recommends the most appropriate
+next workflow, skill, tool, or sequence of skills.
+
+For example, when the installed skill set supports it:
+
+```text
+Vague feature idea
+→ /grill-me
+→ /to-spec
+
+Defined implementation
+→ /implement
+
+Bug investigation
+→ /triage
+→ /tdd
+→ /implement
+
+Completed change
+→ /code-review
+```
+
+The companion uses a generated installed-skill registry:
+
+```text
+.agents/SKILL_REGISTRY.json
+```
+
+so it recommends **real installed skills by exact name** rather than generic or
+invented commands.
+
+In short:
+
+```text
+Universal Engineering Layer
+        │
+        ├── 1. Engineering discipline + workflows
+        │      Karpathy + Matt Pocock skills
+        │
+        ├── 2. Engineering capabilities
+        │      MCPs + CLI tooling + verification tools
+        │
+        └── 3. Engineering orchestration
+               Engineering Companion meta-skill
+               → detects the moment
+               → selects the skill
+               → selects the tools
+               → recommends the next engineering move
+```
+
+The result is a portable engineering layer that lets different AI coding tools
+work under the same engineering process.
+
+---
+
+# Choose how you want to install it
+
+Universal Engineering Layer can be used in **two clearly different ways**:
+
+1. **Install the CLI globally on your system**
+2. **Install the engineering layer only inside one project**
+
+These are not the same thing.
+
+---
+
+## Option A — Install globally on your system
+
+Use this if you want a reusable command such as:
+
+```bash
+engineering-layer
+```
+
+available from any terminal.
+
+This installs the **launcher script globally**, but the engineering layer itself
+is still installed into projects only when you explicitly run it there.
+
+### Global CLI setup
+
+Clone this repository:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/universal-engineering-layer.git
+cd universal-engineering-layer
+```
+
+Install the script into a directory on your `PATH`:
+
+```bash
+mkdir -p ~/bin
+cp universal-engineering-layer.sh ~/bin/engineering-layer
+chmod +x ~/bin/engineering-layer
+```
+
+Make sure `~/bin` is on your `PATH`.
+
+For Bash:
+
+```bash
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+For Zsh:
+
+```bash
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Now you can enter any project and install the layer:
+
+```bash
+cd ~/projects/my-project
+
+engineering-layer install --profile recommended
+```
+
+And later:
+
+```bash
+engineering-layer companion
+engineering-layer doctor
+engineering-layer update --profile recommended
+```
+
+### What global installation changes
+
+The global setup above creates:
+
+```text
+~/bin/engineering-layer
+```
+
+It does **not** automatically modify all your projects.
+
+Each project receives the engineering layer only when you run:
+
+```bash
+engineering-layer install
+```
+
+inside that project or point to it with:
+
+```bash
+engineering-layer install --project /path/to/project
+```
+
+### Hermes note
+
+If Hermes is detected, the installer may register the project's skill directory
+inside the user's Hermes configuration.
+
+If you do **not** want that user-level Hermes change, add:
+
+```bash
+--no-hermes-config
+```
+
+Example:
+
+```bash
+engineering-layer install \
+  --profile recommended \
+  --no-hermes-config
+```
+
+---
+
+## Option B — Install only inside one project
+
+Use this if you want **everything to stay project-local** and do not want to
+install a global `engineering-layer` command.
+
+Go to the target project:
+
+```bash
+cd /path/to/my-project
+```
+
+Download the installer directly into that project:
+
+```bash
+curl -LO https://raw.githubusercontent.com/YOUR_USERNAME/universal-engineering-layer/main/universal-engineering-layer.sh
+```
+
+Make it executable:
+
+```bash
+chmod +x universal-engineering-layer.sh
+```
+
+Then install the engineering layer locally:
+
+```bash
+./universal-engineering-layer.sh install \
+  --profile recommended \
+  --no-hermes-config
+```
+
+This is the recommended command for a **strictly project-local installation**.
+
+### What project-local installation changes
+
+It adds project files such as:
+
+```text
+my-project/
+├── AGENTS.md
+├── CLAUDE.md
+├── CONTEXT.md
+├── ENGINEERS.md
+├── how-to.html
+├── universal-engineering-layer.sh
+│
+├── .agents/
+├── .claude/
+├── .codex/
+├── .opencode/
+├── .openclaw/
+└── .github/
+```
+
+The `how-to.html` file is generated locally and automatically added to
+`.gitignore`.
+
+The project-local install does **not** require a global CLI.
+
+### Project-local commands
+
+From inside the project:
+
+```bash
+./universal-engineering-layer.sh companion
+```
+
+```bash
+./universal-engineering-layer.sh doctor
+```
+
+```bash
+./universal-engineering-layer.sh update --profile recommended
+```
+
+```bash
+./universal-engineering-layer.sh remove
+```
+
+### Claude Code in a project-local install
+
+Inside Claude Code, use:
+
+```text
+/engineering-companion
+```
+
+For example:
+
+```text
+/engineering-companion what should I do next?
+```
+
+This is different from the shell command:
+
+```bash
+./universal-engineering-layer.sh companion
+```
+
+The slash-command skill can use the active conversation and harness context,
+while the shell command performs lightweight repository-state analysis.
+
+### Strict project-local rule
+
+If you want the installation to remain strictly local to the project, use:
+
+```bash
+--no-hermes-config
+```
+
+because Hermes integration may otherwise write to:
+
+```text
+~/.hermes/config.yaml
+```
+
+---
+
+# Quick decision guide
+
+| What you want | Recommended setup |
+|---|---|
+| Use UEL across many projects | Install the CLI globally as `engineering-layer` |
+| Use UEL in only one repository | Keep `universal-engineering-layer.sh` inside that project |
+| Absolutely no user-level config changes | Use project-local install + `--no-hermes-config` |
+| Use Claude Code skill directly | `/engineering-companion` |
+| Ask from a normal terminal | `engineering-layer companion` or `./universal-engineering-layer.sh companion` |
+| Maintain multiple projects easily | Global CLI install |
+
+A useful mental shortcut:
+
+```text
+GLOBAL INSTALL
+→ installs the reusable launcher command on your system
+
+PROJECT INSTALL
+→ installs the engineering layer into a repository
+```
+
+The launcher and the project layer are separate concepts.
 
 ---
 
@@ -608,6 +974,173 @@ for a focused explanation of the feature.
 
 ---
 
+
+## Using the Engineering Companion inside your harness
+
+After installation, skill-aware harnesses can expose the companion directly as:
+
+```text
+/engineering-companion
+```
+
+For example, in Claude Code:
+
+```text
+/engineering-companion what should I do next?
+```
+
+```text
+/engineering-companion assess the risk of this change
+```
+
+```text
+/engineering-companion which skill should I use for this bug?
+```
+
+The companion can also be selected automatically by compatible harnesses when
+the task clearly calls for workflow routing.
+
+The shell command remains available:
+
+```bash
+engineering-layer companion
+```
+
+The distinction is useful:
+
+```text
+/engineering-companion
+→ understands the active user request + harness context + project state
+
+engineering-layer companion
+→ lightweight repository-state analysis from the shell
+```
+
+### Important: `how-to.html` is not a project specification
+
+`how-to.html` is generated by Universal Engineering Layer as a **local
+tutorial**.
+
+It must not be interpreted by the Engineering Companion—or by other agents—as:
+
+```text
+a PRD
+a project seed
+a product specification
+a requirements document
+a design brief
+```
+
+The installed policies explicitly tell agents to ignore it when determining
+what the user's software project is meant to become.
+
+Project intent should instead be derived from:
+
+1. the user's request;
+2. `CONTEXT.md`;
+3. actual product/project documentation;
+4. ADRs;
+5. source code, tests, issues, and Git history.
+
+
+---
+
+
+## Deterministic exact-skill routing
+
+The Engineering Companion routes against the skills that are **actually
+installed** in the project.
+
+During installation, Universal Engineering Layer scans every installed
+`SKILL.md` and generates:
+
+```text
+.agents/SKILL_REGISTRY.json
+```
+
+This registry contains exact skill names, slash commands, descriptions,
+capabilities, supported project moments, and routing priorities.
+
+That means the companion can recommend real installed Matt Pocock skills.
+
+For example, if these are installed:
+
+```text
+/grill-me
+/to-spec
+/to-tickets
+/implement
+/tdd
+/code-review
+```
+
+and the user says:
+
+```text
+I have an idea for a feature, but the requirements are still vague.
+```
+
+the companion can deterministically recommend:
+
+```text
+/grill-me
+→ /to-spec
+```
+
+instead of only saying:
+
+```text
+requirements clarification
+→ specification
+```
+
+A larger workflow can become:
+
+```text
+/grill-me
+→ /to-spec
+→ /to-tickets
+→ /implement
+→ /code-review
+```
+
+A debugging workflow can become:
+
+```text
+/triage
+→ /tdd
+→ /implement
+```
+
+when those exact skills are installed.
+
+### Hard rules
+
+The Engineering Companion must:
+
+1. consult `.agents/SKILL_REGISTRY.json`;
+2. prefer an exact installed slash command over a generic workflow label;
+3. never invent a skill command that is absent from the registry;
+4. recommend an ordered sequence when several installed skills are useful;
+5. keep that sequence as short as practical;
+6. re-evaluate the project moment after major workflow transitions;
+7. fall back to a generic workflow description if no installed skill matches.
+
+The deterministic resolver lives at:
+
+```text
+.agents/skills/engineering-companion/scripts/resolve-skill.py
+```
+
+Example:
+
+```bash
+python3 .agents/skills/engineering-companion/scripts/resolve-skill.py   --registry .agents/SKILL_REGISTRY.json   --moment specification   --task "I have an idea but the requirements are vague"
+```
+
+
+---
+
 # Profiles
 
 Universal Engineering Layer uses installation profiles.
@@ -1072,47 +1605,27 @@ The installer detects what is available and attempts conservative installation p
 
 ---
 
-# Installation
 
-Clone this repository:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/universal-engineering-layer.git
-cd universal-engineering-layer
-```
-
-Make the installer executable:
-
-```bash
-chmod +x universal-engineering-layer.sh
-```
-
-Then install into your project:
-
-```bash
-./universal-engineering-layer.sh install --project ~/projects/my-project
-```
-
----
-
-# Quick installation from GitHub
-
-Once you publish this repository, users can download the installer directly:
-
-```bash
-curl -LO https://raw.githubusercontent.com/YOUR_USERNAME/universal-engineering-layer/main/universal-engineering-layer.sh
-chmod +x universal-engineering-layer.sh
-```
-
-Then:
-
-```bash
-./universal-engineering-layer.sh install --profile recommended
-```
-
----
 
 # Basic commands
+
+
+These commands work in both installation modes.
+
+If you installed the CLI globally, use:
+
+```bash
+engineering-layer <command>
+```
+
+If you kept the installer only inside the project, use:
+
+```bash
+./universal-engineering-layer.sh <command>
+```
+
+The examples below use the project-local form unless stated otherwise.
+
 
 ## Install
 
@@ -1452,31 +1965,21 @@ Then validate:
 
 ---
 
-# Global installation
 
-You can keep the script in your PATH:
+
+Strict project-local installation:
 
 ```bash
-mkdir -p ~/bin
-cp universal-engineering-layer.sh ~/bin/engineering-layer
-chmod +x ~/bin/engineering-layer
+./universal-engineering-layer.sh install \
+  --profile recommended \
+  --no-hermes-config
 ```
 
-Then:
+Reusable global CLI usage:
 
 ```bash
-cd ~/projects/my-project
 engineering-layer install --profile recommended
 ```
-
-Later:
-
-```bash
-engineering-layer update --profile recommended
-engineering-layer doctor
-```
-
----
 
 # Suggested repository layout
 
